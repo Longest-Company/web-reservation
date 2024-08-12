@@ -302,7 +302,8 @@ const ReservationPage = () => {
 					sx={{
 						marginTop: "3rem",
 						columnGap: { md: "1.5rem", xs: "1.25rem" },
-						overflowX: "scroll",
+						overflowX: { md: "hidden", sm: "scroll" },
+						//overflowX: "scroll",
 					}}
 				>
 					{dateTable.map((item, idx) => {
@@ -472,8 +473,11 @@ const ReservationPage = () => {
 									direction="row"
 									sx={{
 										marginBottom: "2rem",
-										overflowX: { md: "none", sm: "scroll" },
-										widtg: "100vw",
+										overflowX: {
+											md: "hidden",
+											sm: "scroll",
+										},
+										width: "100vw",
 									}}
 								>
 									<Stack
