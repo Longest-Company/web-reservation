@@ -65,6 +65,7 @@ const Dialog = ({
 		setShowChoosePayment(false);
 		setIsPossibleClick(false);
 		setFormData(originFormData);
+		setPg("");
 	};
 
 	const apiPortOne = async (reqData) => {
