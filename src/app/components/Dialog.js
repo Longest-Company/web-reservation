@@ -5,7 +5,6 @@ import {
 	Button,
 	Container,
 	Input,
-	InputBase,
 	InputLabel,
 	MenuItem,
 	Modal,
@@ -22,6 +21,7 @@ import kakaoPay from "@/../../public/assets/kakaopay.svg";
 import naverPay from "@/../../public/assets/naverpay.svg";
 import creditCard from "@/../../public/assets/creditcard.svg";
 import { toast } from "sonner";
+import fetchWithAuth from "../api/api";
 
 const inputNumberWithComma = (str) => {
 	return String(str).replace(/(\d)(?=(?:\d{3})+(?!\d))/g, "$1,");
@@ -32,7 +32,15 @@ const originFormData = {
 	phoneNumber: "",
 	peopleCnt: "",
 };
-const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
+const Dialog = ({
+	isOpen,
+	setIsOpen,
+	date,
+	time,
+	goodsInfo,
+	companyInfo,
+	setFinish,
+}) => {
 	const dateSplit = date.split("-");
 	const formatDate = `${dateSplit[0]}년 ${dateSplit[1]}월 ${dateSplit[2]}일`;
 
@@ -59,19 +67,25 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 		setFormData(originFormData);
 	};
 
-	const callback = (response) => {
-		console.log(response);
-		const { success, error_msg } = response;
-
-		toast.success(error_msg);
-		if (success) {
-			alert("결제 성공");
+	const apiPortOne = async (reqData) => {
+		const res = await fetchWithAuth(
+			`/admin/par3/web/reservePortone`,
+			"POST",
+			{
+				body: reqData,
+			}
+		);
+		const json = await res.json();
+		if (json.success) {
+			toast.success("예약을 완료하였습니다.");
+			closeInit();
+			setFinish();
 		} else {
-			//	alert(`결제 실패: ${error_msg}`);
+			toast.error(json.message);
 		}
 	};
 
-	const TestPortOne = () => {
+	const paymentPortOne = () => {
 		//v1사용
 		if (window.IMP) {
 			if (!window.IMP) return;
@@ -79,58 +93,56 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 			const { IMP } = window;
 			IMP.init(process.env.NEXT_PUBLIC_PORTONE); // 가맹점 식별코드
 
-			console.log(pg);
 			//const payM = pg === "kcp" ? "card" : pg;
-			/* 2. 결제 데이터 정의하기 */
+			let pgData = pg;
+			let payMethod = "card";
+
+			if (pgData === "kcp.IP25K") {
+				payMethod = "kakaopay";
+			} else if (pgData === "kcp.IP25N") {
+				payMethod = "naverpay";
+			}
+
 			const data = {
-				pg: pg, // PG사 : https://developers.portone.io/docs/ko/tip/pg-2 참고
-				pay_method: "card", // 결제수단
+				pg: pgData, // PG사
+				pay_method: payMethod, // 결제수단
 				setChoosePaymentmerchant_uid: `mid_${new Date().getTime()}`, // 주문번호
-				amount: 100, // 결제금액
-				name: "아임포트 결제 데이터 분석", // 주문명
-				buyer_name: "홍길동", // 구매자 이름
-				buyer_tel: "01012341234", // 구매자 전화번호
-				custom_data: {
-					name: formData.name,
-					peopleCnt: formData.peopleCnt,
-					phoneNumber: formData.phoneNumber,
-					time: time ?? "",
-				},
+				amount: formData.peopleCnt * goodsInfo.price, // 결제금액
+				name: `${formatDate} ${time} ${formData.peopleCnt}명`, // 주문명
+				buyer_name: formData.name, // 구매자 이름
+				buyer_tel: formData.phoneNumber, // 구매자 전화번호
 				m_redirect_url: "http://localhost:3001/reservation?id=8",
 				notice_url: "",
 			};
 
 			/* 4. 결제 창 호출하기 */
-			IMP.request_pay(data, callback);
+			IMP.request_pay(data, (response) => {
+				const { success, error_msg } = response;
+
+				if (success) {
+					const data = {
+						portoneId: response.imp_uid,
+						name: formData.name,
+						phoneNumber: formData.phoneNumber,
+						reserveNumber: Number(formData.peopleCnt),
+						date: date,
+						time: time,
+						goodsId: goodsInfo.id,
+					};
+					apiPortOne(data);
+				} else {
+					toast.error(error_msg);
+				}
+			});
 		}
-		//channel-key-4ca6a942-3ee0-48fb-93ef-f4294b876d28
-		// const data: PortOne.PaymentRequest = {
-		// 	storeId: "store-49d28698-3b16-492d-a87c-172ebcc71d27",
-		// 	channelKey: "channel-key-962ef9ac-a429-4b60-b961-c9d2bdf9a541",
-		// 	paymentId: "paymentId_202432422",
-		// 	orderName: "반팔 티셔츠 XL",
-		// 	totalAmount: 100,
-		// 	currency: "CURRENCY_KRW",
-		// 	payMethod: "CARD",
-
-		// 	customData: {
-		// 		name: formData.name,
-		// 		peopleCnt: formData.peopleCnt,
-		// 		phoneNumber: formData.phoneNumber,
-		// 		time: selectTime ?? "",
-		// 	},
-		// };
-
-		// const a = await PortOne.requestPayment(data);
-
-		// console.log(a);
 	};
 
 	useEffect(() => {
 		setIsPossibleClick(
 			formData.name !== "" &&
 				formData.phoneNumber !== "" &&
-				formData.phoneNumber.length === 13 &&
+				(formData.phoneNumber.length === 12 ||
+					formData.phoneNumber.length === 13) &&
 				formData.peopleCnt !== ""
 		);
 	}, [formData]);
@@ -379,7 +391,7 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 										marginBottom: "1rem",
 										border: "1px solid",
 										borderColor:
-											pg === "naverpay"
+											pg === "kcp.IP25N"
 												? "#283081"
 												: "#d2d2d2",
 										borderRadius: "10px",
@@ -398,20 +410,20 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 										네이버페이
 									</Typography>
 								</Button>
-								<Button
+								{/* <Button
 									sx={{
 										width: "100%",
 										justifyContent: "flex-start",
 										border: "1px solid",
 										borderColor:
-											pg === "kakaopay"
+											pg === "kcp.IP25K"
 												? "#283081"
 												: "#d2d2d2",
 										borderRadius: "10px",
 										padding: "0.5rem",
 									}}
 									onClick={() => {
-										setPg("kakaopay");
+										setPg("kcp.IP25K");
 									}}
 								>
 									<Image
@@ -422,7 +434,7 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 									<Typography color="#4B4C4C" fontSize="1rem">
 										카카오페이
 									</Typography>
-								</Button>
+								</Button> */}
 							</Stack>
 						)}
 						<Stack
@@ -463,7 +475,8 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 									justifyContent="space-between"
 								>
 									<Typography>
-										{inputNumberWithComma(price)}원 x
+										{inputNumberWithComma(goodsInfo.price)}
+										원 x
 										{formData.peopleCnt !== ""
 											? formData.peopleCnt
 											: "0"}
@@ -472,7 +485,8 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 									<Typography sx={{ fontWeight: "700" }}>
 										{formData.peopleCnt !== ""
 											? inputNumberWithComma(
-													formData.peopleCnt * price
+													formData.peopleCnt *
+														goodsInfo.price
 											  )
 											: "0"}
 										원
@@ -512,10 +526,8 @@ const Dialog = ({ isOpen, setIsOpen, date, time, price, companyInfo }) => {
 								<Button
 									variant="contained"
 									onClick={() => {
-										//testPayment();
-										console.log(formData);
 										pg !== ""
-											? TestPortOne()
+											? paymentPortOne()
 											: setShowChoosePayment(true);
 									}}
 									disabled={

@@ -1,8 +1,6 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-
-const inter = Inter({ subsets: ["latin"] });
+import { Toaster } from "sonner";
 
 export const metadata = {
 	title: "Create Next App",
@@ -12,7 +10,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
 	return (
 		<html lang="en">
-			<body>{children}</body>
+			<body>
+				{children}
+				<Toaster position="top-center" richColors />
+			</body>
 			{/* 포트원 */}
 			<Script src="https://cdn.iamport.kr/v1/iamport.js" />
 

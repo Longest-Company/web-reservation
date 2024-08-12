@@ -128,16 +128,6 @@ const ReservationPage = () => {
 			const { goods, timetable: resTimeTable } = json.result;
 			setGoodsInfo(goods);
 
-			// const times = {};
-			// timetable.map((item) => {
-			// 	const keyHour = item.time.split(":")[0];
-			// 	if (times[keyHour]) {
-			// 		times[keyHour] = times[keyHour] + "," + item.time;
-			// 	} else {
-			// 		times[keyHour] = item.time;
-			// 	}
-			// });
-
 			const times = {};
 			resTimeTable.map((item) => {
 				const keyHour = item.time.split(":")[0];
@@ -200,6 +190,14 @@ const ReservationPage = () => {
 	useEffect(() => {
 		JWTToken();
 	}, []);
+
+	const setFinish = () => {
+		setGoodsInfo({ id: -1, name: "", price: 0 });
+		setTimeTable([]);
+		setSelectedDate("");
+		setSelctedTime("");
+		getCompanyInfo();
+	};
 
 	return (
 		<>
@@ -546,8 +544,9 @@ const ReservationPage = () => {
 				setIsOpen={setIsOpenModal}
 				date={selectedDate}
 				time={selectedTime}
-				price={goodsInfo.price}
+				goodsInfo={goodsInfo}
 				companyInfo={companyInfo}
+				setFinish={setFinish}
 			/>
 		</>
 	);
