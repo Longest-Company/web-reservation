@@ -1,8 +1,9 @@
 "use client";
 import { Inter } from "next/font/google";
 import jwt from "jsonwebtoken";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import Loading from "./loading";
 
 const ReservationLayout = ({ children }) => {
 	const companyId = useSearchParams().get("id");
@@ -35,7 +36,7 @@ const ReservationLayout = ({ children }) => {
 					color: "#4B4C4C",
 				}}
 			>
-				{children}
+				<Suspense fallback={<Loading />}>{children}</Suspense>
 			</body>
 		</html>
 	);
