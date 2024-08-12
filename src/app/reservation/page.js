@@ -7,9 +7,11 @@ import selectedDateIcon from "@/../../public/assets/calendarSelect.svg";
 import arrowBlackIcon from "@/../../public/assets/arrowRightBlack.svg";
 import arrowWhiteIcon from "@/../../public/assets/arrowRightWhite.svg";
 
+import jwt from "jsonwebtoken";
 import Image from "next/image";
 import styled from "@emotion/styled";
 import Dialog from "../components/Dialog";
+import { useSearchParams } from "next/navigation";
 
 const blueMain = "#283081";
 const dayArr = ["일", "월", "화", "수", "목", "금", "토"];
@@ -90,6 +92,8 @@ const GoodsReservationContainer = styled.div`
 `;
 
 const ReservationPage = () => {
+	const companyId = useSearchParams().get("id");
+
 	const [companyInfo, setCompanyInfo] = useState({
 		id: -1,
 		name: "",
@@ -159,6 +163,21 @@ const ReservationPage = () => {
 		}
 	};
 
+	const JWTToken = () => {
+		try {
+			const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
+			const token = jwt.sign({ par3Id: companyId }, secret, {
+				algorithm: "HS256",
+				expiresIn: "1d",
+			});
+			localStorage.setItem("accessToken", token);
+			getCompanyInfo();
+		} catch (err) {
+			console.log(err);
+			return null;
+		}
+	};
+
 	const getCompanyInfo = async () => {
 		const res = await fetchWithAuth("/admin/par3/web", "GET");
 		const json = await res.json();
@@ -179,7 +198,7 @@ const ReservationPage = () => {
 	};
 
 	useEffect(() => {
-		getCompanyInfo();
+		JWTToken();
 	}, []);
 
 	return (
