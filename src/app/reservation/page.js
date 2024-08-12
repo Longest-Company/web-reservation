@@ -470,9 +470,9 @@ const ReservationPage = () => {
 									key={key}
 									flex
 									direction="row"
-									style={{
+									sx={{
 										marginBottom: "2rem",
-										overflowX: "scroll",
+										overflowX: { md: "none", sm: "scroll" },
 										widtg: "100vw",
 									}}
 								>
