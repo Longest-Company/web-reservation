@@ -2,8 +2,11 @@
 import { Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import fetchWithAuth from "../api/api";
+import calendarNoIcon from "@/../../public/assets/calendarNo.svg";
 import calendarIcon from "@/../../public/assets/calendar.svg";
 import selectedDateIcon from "@/../../public/assets/calendarSelect.svg";
+import selectedSaturdayDateIcon from "@/../../public/assets/calendarSelectSaturday.svg";
+import selectedSundayDateIcon from "@/../../public/assets/calendarSelectSunday.svg";
 import arrowBlackIcon from "@/../../public/assets/arrowRightBlack.svg";
 import arrowWhiteIcon from "@/../../public/assets/arrowRightWhite.svg";
 
@@ -14,6 +17,8 @@ import Dialog from "../components/Dialog";
 import { useSearchParams } from "next/navigation";
 
 const blueMain = "#283081";
+const secondaryBlue = "#53599A";
+const primaryRed = "#E16067";
 const dayArr = ["일", "월", "화", "수", "목", "금", "토"];
 
 const inputNumberWithComma = (str) => {
@@ -31,8 +36,11 @@ const GoodsPriceContainer = styled.div`
 	font-weight: 500;
 
 	@media (max-width: 600px) {
-		font-size: 1rem;
-		padding: 1.5rem 1rem;
+		font-size: 0.875rem;
+		padding: 1rem;
+		text-align: left;
+		flex-direction: column;
+		width: 30%;
 	}
 
 	${({ isInfo }) =>
@@ -43,6 +51,10 @@ const GoodsPriceContainer = styled.div`
 	div:last-child {
 		font-size: 1.5rem;
 		font-weight: 700;
+
+		@media (max-width: 600px) {
+			font-size: 1.2rem;
+		}
 	}
 `;
 const GoodsReservationContainer = styled.div`
@@ -61,8 +73,9 @@ const GoodsReservationContainer = styled.div`
 	}
 
 	@media (max-width: 600px) {
-		font-size: 1.5rem;
-		padding: 1.5rem 0.5rem;
+		font-size: 1.2rem;
+		padding: 1rem;
+		width: 70%;
 
 		img {
 			width: 12px;
@@ -86,7 +99,7 @@ const GoodsReservationContainer = styled.div`
 		color: ${({ isInfo }) => (isInfo ? "white" : "#1e1f1f")};
 
 		@media (max-width: 600px) {
-			font-size: 1rem;
+			font-size: 0.875rem;
 		}
 	}
 `;
@@ -307,9 +320,7 @@ const ReservationPage = () => {
 								<Stack
 									sx={{
 										height: { md: "140px", xs: "120px" },
-										border: item.reservationStatus
-											? `1px solid ${blueMain}`
-											: "none",
+										border: "none",
 										borderRadius: "8px",
 										boxShadow:
 											"0px 4px 8px 0px rgba(0, 0, 0, 0.04)",
@@ -329,7 +340,11 @@ const ReservationPage = () => {
 										justifyContent="space-between"
 										sx={{
 											background: item.reservationStatus
-												? blueMain
+												? item.day === 0
+													? primaryRed
+													: item.day === 6
+													? secondaryBlue
+													: blueMain
 												: "#E9E8E8",
 											padding: "1rem 0.5rem",
 											color: item.reservationStatus
@@ -342,6 +357,7 @@ const ReservationPage = () => {
 										<Stack
 											flex
 											direction="row"
+											alignItems="center"
 											sx={{
 												"> img": {
 													color: "white",
@@ -349,7 +365,11 @@ const ReservationPage = () => {
 											}}
 										>
 											<Image
-												src={calendarIcon}
+												src={
+													item.reservationStatus
+														? calendarIcon
+														: calendarNoIcon
+												}
 												alt={`calendar-${idx}`}
 											/>
 											<Typography
@@ -377,6 +397,16 @@ const ReservationPage = () => {
 										sx={{
 											background: "white",
 											height: "100%",
+											border:
+												item.date === selectedDate
+													? `1px solid ${
+															item.day === 0
+																? primaryRed
+																: item.day === 6
+																? secondaryBlue
+																: blueMain
+													  }`
+													: "none",
 											borderBottomLeftRadius: "8px",
 											borderBottomRightRadius: "8px",
 											justifyContent: "center",
@@ -384,7 +414,11 @@ const ReservationPage = () => {
 											fontWeight: "600",
 											fontSize: "1.125rem",
 											color: item.reservationStatus
-												? blueMain
+												? item.day === 0
+													? primaryRed
+													: item.day === 6
+													? secondaryBlue
+													: blueMain
 												: "#A5A5A5",
 										}}
 									>
@@ -405,7 +439,13 @@ const ReservationPage = () => {
 									{selectedDate === item.date &&
 										item.reservationStatus && (
 											<Image
-												src={selectedDateIcon}
+												src={
+													item.day === 0
+														? selectedSundayDateIcon
+														: item.day === 6
+														? selectedSaturdayDateIcon
+														: selectedDateIcon
+												}
 												alt={`select-${idx}`}
 											/>
 										)}
