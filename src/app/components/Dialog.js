@@ -149,7 +149,7 @@ const Dialog = ({
 	}, [formData]);
 
 	return (
-		<Modal open={isOpen} onClose={closeInit}>
+		<Modal open={isOpen} onClose={closeInit} disableAutoFocus>
 			<Container
 				//maxWidth={{ md: "420px", xs: "90%" }}
 				sx={{
@@ -158,11 +158,12 @@ const Dialog = ({
 					left: "50%",
 					transform: "translate(-50%, -50%)",
 					width: { md: "420px", xs: "90%" },
+					padding: "0px !important",
 				}}
 			>
 				<Paper
 					sx={{
-						border: "1px solid var(--mui-palette-divider)",
+						border: "1px solid #d2d2d2",
 						boxShadow: "2px 2px 12px 0px rgba(86, 117, 185, 0.25)",
 
 						padding: "1.5rem",
