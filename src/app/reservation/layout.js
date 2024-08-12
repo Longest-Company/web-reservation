@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import Loading from "./loading";
 
 const ReservationLayout = ({ children }) => {
-	const companyId = useSearchParams().get("id");
+	const companyId = location.href.split("=")[1];
+	//useSearchParams().get("id");
 
 	const JWTToken = () => {
 		try {
