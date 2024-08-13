@@ -167,7 +167,7 @@ const Dialog = ({
 			>
 				<Paper
 					sx={{
-						border: "1px solid #d2d2d2",
+						border: "1px solid var(--gray-4)",
 						boxShadow: "2px 2px 12px 0px rgba(86, 117, 185, 0.25)",
 
 						padding: "1.5rem",
@@ -184,7 +184,7 @@ const Dialog = ({
 								<Typography
 									sx={{
 										fontSize: { md: "1.2rem", xs: "1rem" },
-										color: "#A5A5A5",
+										color: "var(--gray-5)",
 										fontWeight: "700",
 									}}
 								>
@@ -236,11 +236,11 @@ const Dialog = ({
 										marginTop: "0.3rem",
 										"& .MuiInputBase-input": {
 											borderRadius: "8px",
-											border: "1px solid #E9E8E8",
+											border: "1px solid var(--gray-3)",
 											fontSize: 16,
 											padding: "10px 12px",
 											"&:focus": {
-												border: "2px solid #E9E8E8",
+												border: "2px solid var(--gray-3)",
 											},
 										},
 										"::after": {
@@ -254,7 +254,7 @@ const Dialog = ({
 												borderBottom: "none",
 											},
 										"input::placeholder": {
-											color: "#D2D2D2",
+											color: "var(--gray-4)",
 										},
 									}}
 									placeholder="예약자명"
@@ -294,11 +294,11 @@ const Dialog = ({
 										marginTop: "0.3rem",
 										"& .MuiInputBase-input": {
 											borderRadius: "8px",
-											border: "1px solid #E9E8E8",
+											border: "1px solid var(--gray-3)",
 											fontSize: 16,
 											padding: "10px 12px",
 											"&:focus": {
-												border: "2px solid #E9E8E8",
+												border: "2px solid var(--gray-3)",
 											},
 										},
 										"::after": {
@@ -312,7 +312,7 @@ const Dialog = ({
 												borderBottom: "none",
 											},
 										"input::placeholder": {
-											color: "#D2D2D2",
+											color: "var(--gray-4)",
 										},
 									}}
 									placeholder="숫자만 입력"
@@ -351,7 +351,7 @@ const Dialog = ({
 								<Typography
 									sx={{
 										fontSize: "0.8rem",
-										color: "#A5A5A5",
+										color: "var(--gray-5)",
 									}}
 								>
 									{companyInfo.maxUser}명까지 가능
@@ -372,8 +372,8 @@ const Dialog = ({
 										border: "1px solid",
 										borderColor:
 											pg === "kcp"
-												? "#283081"
-												: "#d2d2d2",
+												? "var(--primary-blue)"
+												: "var(--gray-4)",
 										borderRadius: "10px",
 										padding: "0.5rem",
 									}}
@@ -398,8 +398,8 @@ const Dialog = ({
 										border: "1px solid",
 										borderColor:
 											pg === "kcp.IP25N"
-												? "#283081"
-												: "#d2d2d2",
+												? "var(--primary-blue)"
+												: "var(--gray-4)",
 										borderRadius: "10px",
 										padding: "0.5rem",
 									}}
@@ -456,14 +456,14 @@ const Dialog = ({
 									border: "1px solid",
 									borderColor:
 										formData.peopleCnt !== ""
-											? "#283081"
-											: "#A5A5A5",
+											? "var(--primary-blue)"
+											: "var(--gray-5)",
 									borderRadius: "8px",
 									marginBottom: "1rem",
 									color:
 										formData.peopleCnt !== ""
-											? "#283081"
-											: "#A5A5A5",
+											? "var(--primary-blue)"
+											: "var(--gray-5)",
 								}}
 							>
 								<Stack flex direction="row">
@@ -559,10 +559,10 @@ const Dialog = ({
 									sx={{
 										background: isPossibleClick
 											? "#283081"
-											: "#E9E8E8",
+											: "var(--gray-3)",
 										color: isPossibleClick
 											? "white"
-											: "#A5A5A5",
+											: "var(--gray-5)",
 										boxShadow: "none",
 										"&:hover": {
 											background: "#283081",

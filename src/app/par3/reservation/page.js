@@ -2,31 +2,22 @@
 import { Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import fetchWithAuth from "../../api/api";
-import calendarNoIcon from "@/../../public/assets/calendarNo.svg";
-import calendarIcon from "@/../../public/assets/calendar.svg";
-import selectedDateIcon from "@/../../public/assets/calendarSelect.svg";
-import selectedSaturdayDateIcon from "@/../../public/assets/calendarSelectSaturday.svg";
-import selectedSundayDateIcon from "@/../../public/assets/calendarSelectSunday.svg";
 import arrowBlackIcon from "@/../../public/assets/arrowRightBlack.svg";
 import arrowWhiteIcon from "@/../../public/assets/arrowRightWhite.svg";
 
+import { redirect, useSearchParams } from "next/navigation";
+import jwt from "jsonwebtoken";
 import { toast } from "sonner";
 
-import jwt from "jsonwebtoken";
 import Image from "next/image";
 import styled from "@emotion/styled";
+import DateTable from "../../components/DateTable";
+import TimeTable from "../../components/TimeTable";
 import Dialog from "../../components/Dialog";
-import { redirect, useSearchParams } from "next/navigation";
 import apiPortOne from "../../api/payment";
+import inputNumberWithComma from "../../utils/method";
 
-const blueMain = "#283081";
-const secondaryBlue = "#53599A";
-const primaryRed = "#E16067";
 const dayArr = ["일", "월", "화", "수", "목", "금", "토"];
-
-const inputNumberWithComma = (str) => {
-	return String(str).replace(/(\d)(?=(?:\d{3})+(?!\d))/g, "$1,");
-};
 
 const GoodsPriceContainer = styled.div`
 	display: flex;
@@ -48,8 +39,8 @@ const GoodsPriceContainer = styled.div`
 
 	${({ isInfo }) =>
 		isInfo
-			? `background:linear-gradient(106.88deg, rgba(65, 50, 42, 0.05) 0%, rgba(40, 48, 129, 0.2) 100%); color: ${blueMain}`
-			: "background: #F1F1F1; color: #A5A5A5"};
+			? `background:linear-gradient(106.88deg, rgba(65, 50, 42, 0.05) 0%, rgba(40, 48, 129, 0.2) 100%); color: var(--primary-blue)`
+			: "background: var(--gray-1); color: var(--gray-5)"};
 
 	div:last-child {
 		font-size: 1.5rem;
@@ -89,8 +80,8 @@ const GoodsReservationContainer = styled.div`
 
 	${({ isInfo }) =>
 		isInfo
-			? `background: linear-gradient(180deg, #5675B9 0%, #283081 100%);`
-			: "background: #FAFAFA;"};
+			? `background: linear-gradient(180deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);`
+			: "background: var(--gray-0);"};
 
 	div:first-of-type {
 		color: ${({ isInfo }) => (isInfo ? "white" : "#d2d2d2")};
@@ -99,7 +90,7 @@ const GoodsReservationContainer = styled.div`
 	div:last-child {
 		font-size: 1.5rem;
 		font-weight: 500;
-		color: ${({ isInfo }) => (isInfo ? "white" : "#1e1f1f")};
+		color: ${({ isInfo }) => (isInfo ? "white" : "var(--another-black)")};
 
 		@media (max-width: 600px) {
 			font-size: 0.875rem;
@@ -107,7 +98,7 @@ const GoodsReservationContainer = styled.div`
 	}
 `;
 
-const ReservationPage = () => {
+const Par3ReservationPage = () => {
 	const companyId = useSearchParams().get("id");
 	const impUid = useSearchParams().get("imp_uid");
 	const errorMsg = useSearchParams().get("error_msg");
@@ -210,6 +201,12 @@ const ReservationPage = () => {
 		isSuccess && settingFinish();
 	};
 
+	const changeSelectedDate = (date) => {
+		setSelctedTime("");
+		getReservationTimeList(date);
+		setSelectedDate(date);
+	};
+
 	useEffect(() => {
 		if (impUid) {
 			sessionStorage.setItem("impUid", impUid);
@@ -280,14 +277,14 @@ const ReservationPage = () => {
 
 			<Stack
 				sx={{
-					background: "#F5F7FC",
+					background: "var(--sky-blue-0)",
 					padding: { md: "2rem 4rem", xs: "2rem" },
 				}}
 			>
 				<Stack
 					sx={{
 						padding: { md: "1.25rem 2rem", xs: "1rem 2rem" },
-						border: "1px solid #CBD8EF",
+						border: "1px solid var(--sky-blue-1)",
 						borderRadius: "15px",
 						background: "white",
 					}}
@@ -296,7 +293,7 @@ const ReservationPage = () => {
 					justifyContent="space-between"
 				>
 					<Typography
-						color={blueMain}
+						color="var(--primary-blue)"
 						sx={{
 							fontSize: { md: "1.5rem", sm: "1.25rem" },
 							fontWeight: "700",
@@ -318,7 +315,7 @@ const ReservationPage = () => {
 				</Stack>
 
 				<Typography
-					color={blueMain}
+					color="var(--primary-blue)"
 					sx={{
 						fontSize: { md: "1.5rem", sm: "1.25rem" },
 						fontWeight: "700",
@@ -356,169 +353,13 @@ const ReservationPage = () => {
 						))}
 				</Stack>
 
-				<Stack
-					flex
-					direction="row"
-					width="100%"
-					alignItems="center"
-					sx={{
-						marginTop: "3rem",
-						columnGap: { md: "1.5rem", xs: "1.25rem" },
-						overflowX: { lg: "hidden", md: "scroll", xs: "scroll" },
-						//overflowX: "scroll",
-					}}
-				>
-					{dateTable.map((item, idx) => {
-						return (
-							<Stack
-								key={item.date}
-								sx={{
-									width: "calc((100% - 4rem)/7)",
-									minWidth: "150px",
-									cursor: item.reservationStatus
-										? "pointer"
-										: "not-allowed",
-								}}
-							>
-								<Stack
-									sx={{
-										height: { md: "140px", xs: "120px" },
-										border: "none",
-										borderRadius: "8px",
-										boxShadow:
-											"0px 4px 8px 0px rgba(0, 0, 0, 0.04)",
-									}}
-									onClick={() => {
-										if (!item.reservationStatus) {
-											return;
-										}
-										setSelctedTime("");
-										getReservationTimeList(item.date);
-										setSelectedDate(item.date);
-									}}
-								>
-									<Stack
-										flex
-										direction="row"
-										justifyContent="space-between"
-										sx={{
-											background: item.reservationStatus
-												? item.day === 0
-													? primaryRed
-													: item.day === 6
-													? secondaryBlue
-													: blueMain
-												: "#E9E8E8",
-											padding: "1rem 0.5rem",
-											color: item.reservationStatus
-												? "white"
-												: "#A5A5A5",
-											borderTopLeftRadius: "8px",
-											borderTopRightRadius: "8px",
-										}}
-									>
-										<Stack
-											flex
-											direction="row"
-											alignItems="center"
-											sx={{
-												"> img": {
-													color: "white",
-												},
-											}}
-										>
-											<Image
-												src={
-													item.reservationStatus
-														? calendarIcon
-														: calendarNoIcon
-												}
-												alt={`calendar-${idx}`}
-											/>
-											<Typography
-												sx={{
-													marginLeft: "0.3rem",
-												}}
-											>
-												{item.date.split("-")[2][0] ===
-												"0"
-													? item.date.split("-")[2][1]
-													: item.date.split("-")[2]}
-												일
-											</Typography>
-										</Stack>
-										<Stack
-											justifyContent="center"
-											sx={{
-												fontSize: "0.875rem",
-											}}
-										>
-											{dayArr[item.day]}
-										</Stack>
-									</Stack>
-									<Stack
-										sx={{
-											background: "white",
-											height: "100%",
-											border:
-												item.date === selectedDate
-													? `1px solid ${
-															item.day === 0
-																? primaryRed
-																: item.day === 6
-																? secondaryBlue
-																: blueMain
-													  }`
-													: "none",
-											borderBottomLeftRadius: "8px",
-											borderBottomRightRadius: "8px",
-											justifyContent: "center",
-											alignItems: "center",
-											fontWeight: "600",
-											fontSize: "1.125rem",
-											color: item.reservationStatus
-												? item.day === 0
-													? primaryRed
-													: item.day === 6
-													? secondaryBlue
-													: blueMain
-												: "#A5A5A5",
-										}}
-									>
-										<Typography>
-											{item.reservationStatus
-												? "예약 가능"
-												: "예약 불가"}
-										</Typography>
-									</Stack>
-								</Stack>
-
-								<Stack
-									sx={{
-										margin: "0.5rem auto auto",
-										height: "34px",
-									}}
-								>
-									{selectedDate === item.date &&
-										item.reservationStatus && (
-											<Image
-												src={
-													item.day === 0
-														? selectedSundayDateIcon
-														: item.day === 6
-														? selectedSaturdayDateIcon
-														: selectedDateIcon
-												}
-												alt={`select-${idx}`}
-											/>
-										)}
-								</Stack>
-							</Stack>
-						);
-					})}
-				</Stack>
+				<DateTable
+					dateArr={dateTable}
+					selectedDate={selectedDate}
+					changeSelectedDate={changeSelectedDate}
+				/>
 			</Stack>
-			<Stack
+			{/* <Stack
 				sx={{
 					marginTop: "1rem",
 					padding: { md: "2rem 4rem 86.5px", xs: "2rem 2rem 86.5px" },
@@ -541,13 +382,13 @@ const ReservationPage = () => {
 											md: "scroll",
 											xs: "scroll",
 										},
-										width: "100vw",
+										//width: "100vw",
 									}}
 								>
 									<Stack
 										sx={{
 											width: { md: "110px" },
-											background: blueMain,
+											background: "var(--primary-blue)",
 											fontWeight: "600",
 											whiteSpace: "nowrap",
 											padding: "1rem 1.5rem",
@@ -578,15 +419,15 @@ const ReservationPage = () => {
 													: "not-allowed",
 												padding: "0.5rem 1rem",
 												textAlign: "center",
-												border: "1px solid #E9E8E8",
+												border: "1px solid var(--gray-3)",
 												background: !item.times.status
-													? "#E9E8E8"
+													? "var(--gray-3)"
 													: item.times.time ===
 													  selectedTime
-													? blueMain
+													? "var(--primary-blue)"
 													: "white",
 												color: !item.times.status
-													? "#A5A5A5"
+													? "var(--gray-5)"
 													: item.times.time ===
 													  selectedTime
 													? "white"
@@ -603,7 +444,13 @@ const ReservationPage = () => {
 								</Stack>
 							);
 						})}
-			</Stack>
+			</Stack> */}
+
+			<TimeTable
+				timeTable={timeTable}
+				selectedTime={selectedTime}
+				setSelctedTime={setSelctedTime}
+			/>
 
 			<Stack
 				flex
@@ -661,4 +508,4 @@ const ReservationPage = () => {
 	);
 };
 
-export default ReservationPage;
+export default Par3ReservationPage;
