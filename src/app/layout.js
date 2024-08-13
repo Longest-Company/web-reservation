@@ -1,11 +1,20 @@
+"use client";
+
+import { createTheme, ThemeProvider } from "@mui/material";
 import "./globals.css";
 import Script from "next/script";
 import { Toaster } from "sonner";
 
-export const metadata = {
-	title: "par3 예약 시스템입니다.",
-	description: "",
-};
+// export const metadata = {
+// 	title: "par3 예약 시스템입니다.",
+// 	description: "",
+// };
+
+const theme = createTheme({
+	typography: {
+		fontFamily: "PretendardVariable",
+	},
+});
 
 export default function RootLayout({ children }) {
 	return (
@@ -18,8 +27,10 @@ export default function RootLayout({ children }) {
 					color: "#4B4C4C",
 				}}
 			>
-				{children}
-				<Toaster position="top-center" richColors />
+				<ThemeProvider theme={theme}>
+					{children}
+					<Toaster position="top-center" richColors />
+				</ThemeProvider>
 			</body>
 			{/* 포트원 */}
 			<Script src="https://cdn.iamport.kr/v1/iamport.js" />

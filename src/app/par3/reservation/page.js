@@ -234,7 +234,7 @@ const ReservationPage = () => {
 
 				if (paymenyErrorMsg) {
 					//결제 실패
-					toast.error(errorMsg);
+					toast.error(paymenyErrorMsg);
 					setSelectedDate(date);
 					setSelctedTime(time);
 
