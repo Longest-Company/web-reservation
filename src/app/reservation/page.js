@@ -215,6 +215,10 @@ const ReservationPage = () => {
 	return (
 		<>
 			<title>{companyInfo.name}</title>
+			<meta
+				property="og:title"
+				content={`${companyInfo.name} 예약 시스템`}
+			/>
 
 			<Stack
 				sx={{
