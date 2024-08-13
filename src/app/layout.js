@@ -10,7 +10,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
 	return (
 		<html lang="en">
-			<body>
+			<body
+				style={{
+					maxWidth: "1350px",
+					background: "white",
+					margin: "auto",
+					color: "#4B4C4C",
+				}}
+			>
 				{children}
 				<Toaster position="top-center" richColors />
 			</body>

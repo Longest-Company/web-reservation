@@ -302,7 +302,7 @@ const ReservationPage = () => {
 					sx={{
 						marginTop: "3rem",
 						columnGap: { md: "1.5rem", xs: "1.25rem" },
-						overflowX: { md: "hidden", sm: "scroll" },
+						overflowX: { lg: "hidden", md: "scroll", xs: "scroll" },
 						//overflowX: "scroll",
 					}}
 				>
@@ -473,9 +473,11 @@ const ReservationPage = () => {
 									direction="row"
 									sx={{
 										marginBottom: "2rem",
+
 										overflowX: {
-											md: "hidden",
-											sm: "scroll",
+											lg: "hidden",
+											md: "scroll",
+											xs: "scroll",
 										},
 										width: "100vw",
 									}}
