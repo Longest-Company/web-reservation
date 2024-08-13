@@ -21,7 +21,7 @@ import kakaoPay from "@/../../public/assets/kakaopay.svg";
 import naverPay from "@/../../public/assets/naverpay.svg";
 import creditCard from "@/../../public/assets/creditcard.svg";
 import { toast } from "sonner";
-import fetchWithAuth from "../api/api";
+import apiPortOne from "../api/payment";
 
 const inputNumberWithComma = (str) => {
 	return String(str).replace(/(\d)(?=(?:\d{3})+(?!\d))/g, "$1,");
@@ -39,7 +39,8 @@ const Dialog = ({
 	time,
 	goodsInfo,
 	companyInfo,
-	setFinish,
+	settingFinish,
+	modalData,
 }) => {
 	const dateSplit = date.split("-");
 	const formatDate = `${dateSplit[0]}년 ${dateSplit[1]}월 ${dateSplit[2]}일`;
@@ -68,21 +69,11 @@ const Dialog = ({
 		setPg("");
 	};
 
-	const apiPortOne = async (reqData) => {
-		const res = await fetchWithAuth(
-			`/admin/par3/web/reservePortone`,
-			"POST",
-			{
-				body: reqData,
-			}
-		);
-		const json = await res.json();
-		if (json.success) {
-			toast.success("예약을 완료하였습니다.");
+	const verifyPayment = async (data) => {
+		const isSuccess = await apiPortOne(data);
+		if (isSuccess) {
 			closeInit();
-			setFinish();
-		} else {
-			toast.error(json.message);
+			settingFinish();
 		}
 	};
 
@@ -104,6 +95,10 @@ const Dialog = ({
 				payMethod = "naverpay";
 			}
 
+			const redirectURL = process.env.NEXT_PUBLIC_REDIRECT
+				? process.env.NEXT_PUBLIC_REDIRECT
+				: "http://localhost:3000";
+
 			const data = {
 				pg: pgData, // PG사
 				pay_method: payMethod, // 결제수단
@@ -112,7 +107,8 @@ const Dialog = ({
 				name: `${formatDate} ${time} ${formData.peopleCnt}명`, // 주문명
 				buyer_name: formData.name, // 구매자 이름
 				buyer_tel: formData.phoneNumber, // 구매자 전화번호
-				m_redirect_url: "http://localhost:3001/reservation?id=8",
+				m_redirect_url:
+					redirectURL + `/par3/reservation?id=${companyInfo.id}`,
 				notice_url: "",
 			};
 
@@ -130,7 +126,8 @@ const Dialog = ({
 						time: time,
 						goodsId: goodsInfo.id,
 					};
-					apiPortOne(data);
+
+					verifyPayment(data);
 				} else {
 					toast.error(error_msg);
 				}
@@ -147,6 +144,13 @@ const Dialog = ({
 				formData.peopleCnt !== ""
 		);
 	}, [formData]);
+
+	useEffect(() => {
+		if (modalData) {
+			console.log("modal: ", modalData);
+			setFormData(modalData);
+		}
+	}, [modalData]);
 
 	return (
 		<Modal open={isOpen} onClose={closeInit} disableAutoFocus>
@@ -528,9 +532,24 @@ const Dialog = ({
 								<Button
 									variant="contained"
 									onClick={() => {
-										pg !== ""
-											? paymentPortOne()
-											: setShowChoosePayment(true);
+										if (pg !== "") {
+											paymentPortOne();
+										} else {
+											sessionStorage.setItem(
+												"reservationData",
+												JSON.stringify(formData)
+											);
+											sessionStorage.setItem(
+												"reservationTime",
+												`${date} ${time}`
+											);
+											sessionStorage.setItem(
+												"reservationGoodsInfo",
+												JSON.stringify(goodsInfo)
+											);
+
+											setShowChoosePayment(true);
+										}
 									}}
 									disabled={
 										showChoosePayment && pg === ""
