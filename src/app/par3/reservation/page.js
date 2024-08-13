@@ -1,7 +1,7 @@
 "use client";
 import { Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import fetchWithAuth from "../api/api";
+import fetchWithAuth from "../../api/api";
 import calendarNoIcon from "@/../../public/assets/calendarNo.svg";
 import calendarIcon from "@/../../public/assets/calendar.svg";
 import selectedDateIcon from "@/../../public/assets/calendarSelect.svg";
@@ -10,11 +10,14 @@ import selectedSundayDateIcon from "@/../../public/assets/calendarSelectSunday.s
 import arrowBlackIcon from "@/../../public/assets/arrowRightBlack.svg";
 import arrowWhiteIcon from "@/../../public/assets/arrowRightWhite.svg";
 
+import { toast } from "sonner";
+
 import jwt from "jsonwebtoken";
 import Image from "next/image";
 import styled from "@emotion/styled";
-import Dialog from "../components/Dialog";
-import { useSearchParams } from "next/navigation";
+import Dialog from "../../components/Dialog";
+import { redirect, useSearchParams } from "next/navigation";
+import apiPortOne from "../../api/payment";
 
 const blueMain = "#283081";
 const secondaryBlue = "#53599A";
@@ -106,6 +109,9 @@ const GoodsReservationContainer = styled.div`
 
 const ReservationPage = () => {
 	const companyId = useSearchParams().get("id");
+	const impUid = useSearchParams().get("imp_uid");
+	const errorMsg = useSearchParams().get("error_msg");
+	const [modalData, setModalData] = useState();
 
 	const [companyInfo, setCompanyInfo] = useState({
 		id: -1,
@@ -127,7 +133,6 @@ const ReservationPage = () => {
 	const [goodsInfo, setGoodsInfo] = useState({ id: -1, name: "", price: 0 });
 	const [timeTable, setTimeTable] = useState([]);
 	const [selectedTime, setSelctedTime] = useState("");
-
 	const [isOpenModal, setIsOpenModal] = useState(false);
 
 	const getReservationTimeList = async (date) => {
@@ -200,11 +205,64 @@ const ReservationPage = () => {
 		}
 	};
 
+	const successPayment = async (data) => {
+		const isSuccess = await apiPortOne(data);
+		isSuccess && settingFinish();
+	};
+
 	useEffect(() => {
-		JWTToken();
+		if (impUid) {
+			sessionStorage.setItem("impUid", impUid);
+			errorMsg && sessionStorage.setItem("errorMsg", errorMsg);
+			redirect(`/par3/reservation?id=${companyId}`);
+		} else {
+			if (sessionStorage.getItem("impUid")) {
+				const paymenyErrorMsg = sessionStorage.getItem("errorMsg");
+				getCompanyInfo(); //회사 정보 호출
+
+				const reservationData = JSON.parse(
+					sessionStorage.getItem("reservationData")
+				);
+				const reservationGoodsId = JSON.parse(
+					sessionStorage.getItem("reservationGoodsInfo")
+				).id;
+				const [date, time] = sessionStorage
+					.getItem("reservationTime")
+					.split(" ");
+
+				getReservationTimeList(date); //타임테이블 호출
+
+				if (paymenyErrorMsg) {
+					//결제 실패
+					toast.error(errorMsg);
+					setSelectedDate(date);
+					setSelctedTime(time);
+
+					setModalData(reservationData);
+					setIsOpenModal(true);
+				} else {
+					//결제 성공
+
+					const data = {
+						portoneId: sessionStorage.getItem("impUid"),
+						name: reservationData.name,
+						phoneNumber: reservationData.phoneNumber,
+						reserveNumber: Number(reservationData.peopleCnt),
+						date: date,
+						time: time,
+						goodsId: reservationGoodsId,
+					};
+					successPayment(data);
+				}
+
+				sessionStorage.clear();
+			} else {
+				JWTToken();
+			}
+		}
 	}, []);
 
-	const setFinish = () => {
+	const settingFinish = () => {
 		setGoodsInfo({ id: -1, name: "", price: 0 });
 		setTimeTable([]);
 		setSelectedDate("");
@@ -596,7 +654,8 @@ const ReservationPage = () => {
 				time={selectedTime}
 				goodsInfo={goodsInfo}
 				companyInfo={companyInfo}
-				setFinish={setFinish}
+				settingFinish={settingFinish}
+				modalData={modalData}
 			/>
 		</>
 	);
