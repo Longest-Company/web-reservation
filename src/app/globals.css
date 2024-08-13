@@ -38,6 +38,22 @@
 	--callout-border-rgb: 172, 175, 176;
 	--card-rgb: 180, 185, 188;
 	--card-border-rgb: 131, 134, 135;
+
+	/**컬러 정의*/
+	--primary-blue: #283081;
+	--secondary-blue: #53599a;
+	--primary-red: #e16067;
+
+	--sky-blue-0: #f5f7fc;
+	--sky-blue-1: #cbd8ef;
+
+	--gray-0: #fafafa;
+	--gray-1: #f1f1f1;
+	--gray-3: #e9e8e8;
+	--gray-4: #d2d2d2;
+	--gray-5: #a5a5a5;
+
+	--another-black: #1e1f1f;
 }
 
 @font-face {
