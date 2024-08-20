@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	Box,
 	Button,
 	Container,
 	Input,
@@ -85,13 +84,11 @@ const Dialog = ({
 			const { IMP } = window;
 			IMP.init(process.env.NEXT_PUBLIC_PORTONE); // 가맹점 식별코드
 
-			//const payM = pg === "kcp" ? "card" : pg;
-			let pgData = pg;
 			let payMethod = "card";
 
-			if (pgData === "kcp.IP25K") {
+			if (pg === "kcp.IP25L") {
 				payMethod = "kakaopay";
-			} else if (pgData === "kcp.IP25N") {
+			} else if (pg === "kcp.IP25N") {
 				payMethod = "naverpay";
 			}
 
@@ -100,7 +97,7 @@ const Dialog = ({
 				: "http://localhost:3000";
 
 			const data = {
-				pg: pgData, // PG사
+				pg: pg, // PG사
 				pay_method: payMethod, // 결제수단
 				setChoosePaymentmerchant_uid: `mid_${new Date().getTime()}`, // 주문번호
 				amount: formData.peopleCnt * goodsInfo.price, // 결제금액
@@ -147,7 +144,6 @@ const Dialog = ({
 
 	useEffect(() => {
 		if (modalData) {
-			console.log("modal: ", modalData);
 			setFormData(modalData);
 		}
 	}, [modalData]);
@@ -416,7 +412,7 @@ const Dialog = ({
 										네이버페이
 									</Typography>
 								</Button>
-								{/* <Button
+								<Button
 									sx={{
 										width: "100%",
 										justifyContent: "flex-start",
@@ -429,7 +425,7 @@ const Dialog = ({
 										padding: "0.5rem",
 									}}
 									onClick={() => {
-										setPg("kcp.IP25K");
+										setPg("kcp.IP25L");
 									}}
 								>
 									<Image
@@ -440,7 +436,7 @@ const Dialog = ({
 									<Typography color="#4B4C4C" fontSize="1rem">
 										카카오페이
 									</Typography>
-								</Button> */}
+								</Button>
 							</Stack>
 						)}
 						<Stack
