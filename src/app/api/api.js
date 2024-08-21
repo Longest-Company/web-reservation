@@ -1,7 +1,7 @@
 export default function fetchWithAuth(subUrl, method, options) {
 	const headers = {
 		...options?.headers,
-		Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+		Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
 	};
 
 	if (options?.body) {

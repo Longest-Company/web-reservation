@@ -169,7 +169,7 @@ const Par3ReservationPage = () => {
 				algorithm: "HS256",
 				expiresIn: "1d",
 			});
-			localStorage.setItem("accessToken", token);
+			sessionStorage.setItem("accessToken", token);
 			getCompanyInfo();
 		} catch (err) {
 			console.log(err);
@@ -197,7 +197,7 @@ const Par3ReservationPage = () => {
 	};
 
 	const successPayment = async (data) => {
-		const isSuccess = await apiPortOne(data);
+		const isSuccess = await apiPortOne(data, "par3");
 		isSuccess && settingFinish();
 	};
 
