@@ -26,7 +26,6 @@ const DateTable = ({ dateArr, selectedDate, changeSelectedDate }) => {
 					<Stack
 						key={item.date}
 						sx={{
-							width: "calc((100% - 4rem)/7)",
 							minWidth: "150px",
 							cursor: item.reservationStatus
 								? "pointer"
@@ -45,7 +44,7 @@ const DateTable = ({ dateArr, selectedDate, changeSelectedDate }) => {
 								if (!item.reservationStatus) {
 									return;
 								}
-								changeSelectedDate(item.date);
+								changeSelectedDate(item.date, idx);
 							}}
 						>
 							<Stack

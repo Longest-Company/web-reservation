@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 import fetchWithAuth from "../../api/api";
 import arrowBlackIcon from "@/../../public/assets/arrowRightBlack.svg";
 import arrowWhiteIcon from "@/../../public/assets/arrowRightWhite.svg";
+import TimeTable from "../../components/TimeTable";
 
-import { redirect, useSearchParams } from "next/navigation";
-import jwt from "jsonwebtoken";
 import { toast } from "sonner";
 
+import jwt from "jsonwebtoken";
 import Image from "next/image";
 import styled from "@emotion/styled";
-import DateTable from "../../components/DateTable";
-import TimeTable from "../../components/TimeTable";
-import Dialog from "../../components/Par3Dialog";
+import ApproachDialog from "../../components/ApproachDialog";
+import { redirect, useSearchParams } from "next/navigation";
 import apiPortOne from "../../api/payment";
 import inputNumberWithComma from "../../utils/method";
+import DateTable from "../../components/DateTable";
 
 const GoodsPriceContainer = styled.div`
 	display: flex;
@@ -78,11 +78,11 @@ const GoodsReservationContainer = styled.div`
 
 	${({ isInfo }) =>
 		isInfo
-			? `background: linear-gradient(180deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);`
+			? `background: linear-gradient(180deg, #5675B9 0%, #283081 100%);`
 			: "background: var(--gray-0);"};
 
 	div:first-of-type {
-		color: ${({ isInfo }) => (isInfo ? "white" : "#d2d2d2")};
+		color: ${({ isInfo }) => (isInfo ? "white" : "var(--gray-4)")};
 	}
 
 	div:last-child {
@@ -96,7 +96,7 @@ const GoodsReservationContainer = styled.div`
 	}
 `;
 
-const Par3ReservationPage = () => {
+const ApproachReservationPage = () => {
 	const companyId = useSearchParams().get("id");
 	const impUid = useSearchParams().get("imp_uid");
 	const errorMsg = useSearchParams().get("error_msg");
@@ -107,8 +107,6 @@ const Par3ReservationPage = () => {
 		name: "",
 		caution: "",
 		reservationDueDate: -1,
-		minUser: -1,
-		maxUser: -1,
 	});
 	const [todayMonth, setTodayMonth] = useState(""); //헤더에 xxxx년 x월
 	const [dateTable, setDateTable] = useState([]);
@@ -119,24 +117,25 @@ const Par3ReservationPage = () => {
 	// 	"reservationStatus": true
 	// },
 	const [selectedDate, setSelectedDate] = useState(""); //선택된 날짜
-	const [goodsInfo, setGoodsInfo] = useState({ id: -1, name: "", price: 0 });
+	const [selectedDateIdx, setSelectedDateIdx] = useState(-1); //선택된 날짜 idx
+
+	const [goodsInfo, setGoodsInfo] = useState({ id: -1, name: "", price: 0 }); //선택된 상품정보
 	const [timeTable, setTimeTable] = useState([]);
 	const [selectedTime, setSelctedTime] = useState("");
 	const [isOpenModal, setIsOpenModal] = useState(false);
 
-	const getReservationTimeList = async (date) => {
-		//선택된 날짜에 타임테이블 데이터 받아오기
-		const today = date.split("-");
-		setTodayMonth(`${today[0]}년 ${today[1]}월`);
+	const getReservationTimeList = async (item, date) => {
+		setGoodsInfo(item);
+		const parameterDate = date ?? selectedDate;
 
-		const res = await fetchWithAuth(`/admin/par3/web/${date}`, "GET");
+		const res = await fetchWithAuth(
+			`/admin/approach/web/${parameterDate}?goodsId=${item.id}`,
+			"GET"
+		);
 		const json = await res.json();
 		if (json.success) {
-			const { goods, timetable: resTimeTable } = json.result;
-			setGoodsInfo(goods);
-
 			const times = {};
-			resTimeTable.map((item) => {
+			json.result.timetable.map((item) => {
 				const keyHour = item.time.split(":")[0];
 				if (times[keyHour]) {
 					times[keyHour].push({
@@ -163,7 +162,7 @@ const Par3ReservationPage = () => {
 	const JWTToken = () => {
 		try {
 			const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
-			const token = jwt.sign({ par3Id: companyId }, secret, {
+			const token = jwt.sign({ approachId: companyId }, secret, {
 				algorithm: "HS256",
 				expiresIn: "1d",
 			});
@@ -176,17 +175,15 @@ const Par3ReservationPage = () => {
 	};
 
 	const getCompanyInfo = async () => {
-		const res = await fetchWithAuth("/admin/par3/web", "GET");
+		const res = await fetchWithAuth("/admin/approach/web", "GET");
 		const json = await res.json();
 		if (json.success) {
-			const { par3, reservationDate } = json.result;
+			const { approach, reservationDate } = json.result;
 			setCompanyInfo({
-				id: par3.id,
-				name: par3.name,
-				caution: par3.caution,
-				reservationDueDate: par3.reservationDueDate,
-				minUser: par3.minUser,
-				maxUser: par3.maxUser,
+				id: approach.id,
+				name: approach.name,
+				caution: approach.caution,
+				reservationDueDate: approach.reservationDueDate,
 			});
 			const today = reservationDate[0].date.split("-");
 			setTodayMonth(`${today[0]}년 ${today[1]}월`);
@@ -194,22 +191,16 @@ const Par3ReservationPage = () => {
 		}
 	};
 
-	const successPayment = async (data) => {
-		const isSuccess = await apiPortOne(data, "par3");
+	const verifyPayment = async (data) => {
+		const isSuccess = await apiPortOne(data, "approach");
 		isSuccess && settingFinish();
-	};
-
-	const changeSelectedDate = (date) => {
-		setSelctedTime("");
-		getReservationTimeList(date);
-		setSelectedDate(date);
 	};
 
 	useEffect(() => {
 		if (impUid) {
 			sessionStorage.setItem("impUid", impUid);
 			errorMsg && sessionStorage.setItem("errorMsg", errorMsg);
-			redirect(`/par3/reservation?id=${companyId}`);
+			redirect(`/approach/reservation?id=${companyId}`);
 		} else {
 			if (sessionStorage.getItem("impUid")) {
 				const paymenyErrorMsg = sessionStorage.getItem("errorMsg");
@@ -218,20 +209,25 @@ const Par3ReservationPage = () => {
 				const reservationData = JSON.parse(
 					sessionStorage.getItem("reservationData")
 				);
-				const reservationGoodsId = JSON.parse(
+				const reservatinoGoodsInfo = JSON.parse(
 					sessionStorage.getItem("reservationGoodsInfo")
-				).id;
+				);
 				const [date, time] = sessionStorage
 					.getItem("reservationTime")
 					.split(" ");
 
-				getReservationTimeList(date); //타임테이블 호출
+				const impUid = sessionStorage.getItem("impUid");
+
+				sessionStorage.removeItem("impUid");
+				sessionStorage.removeItem("errorMsg");
 
 				if (paymenyErrorMsg) {
 					//결제 실패
 					toast.error(paymenyErrorMsg);
-					setSelectedDate(date);
+
 					setSelctedTime(time);
+					setSelectedDate(date);
+					getReservationTimeList(reservatinoGoodsInfo, date); //타임테이블 호출
 
 					setModalData(reservationData);
 					setIsOpenModal(true);
@@ -239,19 +235,15 @@ const Par3ReservationPage = () => {
 					//결제 성공
 
 					const data = {
-						portoneId: sessionStorage.getItem("impUid"),
-						name: reservationData.name,
-						phoneNumber: reservationData.phoneNumber,
-						reserveNumber: Number(reservationData.peopleCnt),
+						portoneId: impUid,
+						phoneNumber: reservationData.phoneNumberArr,
+						reserveNumber: reservationData.reserveNumber,
 						date: date,
 						time: time,
-						goodsId: reservationGoodsId,
+						goodsId: reservatinoGoodsInfo.id,
 					};
-					successPayment(data);
+					verifyPayment(data);
 				}
-
-				sessionStorage.removeItem("impUid");
-				sessionStorage.removeItem("errorMsg");
 			} else {
 				JWTToken();
 			}
@@ -263,7 +255,19 @@ const Par3ReservationPage = () => {
 		setTimeTable([]);
 		setSelectedDate("");
 		setSelctedTime("");
+		setSelectedDateIdx(-1);
 		getCompanyInfo();
+	};
+
+	const changeSelectedDate = (date, idx) => {
+		setGoodsInfo({
+			id: -1,
+			name: "",
+			price: 0,
+		});
+		setSelectedDateIdx(idx);
+		setTimeTable([]);
+		setSelectedDate(date);
 	};
 
 	return (
@@ -292,7 +296,7 @@ const Par3ReservationPage = () => {
 					justifyContent="space-between"
 				>
 					<Typography
-						color="var(--primary-blue)"
+						color={"var(--primary-blue)"}
 						sx={{
 							fontSize: { md: "1.5rem", sm: "1.25rem" },
 							fontWeight: "700",
@@ -314,7 +318,7 @@ const Par3ReservationPage = () => {
 				</Stack>
 
 				<Typography
-					color="var(--primary-blue)"
+					color={"var(--primary-blue)"}
 					sx={{
 						fontSize: { md: "1.5rem", sm: "1.25rem" },
 						fontWeight: "700",
@@ -357,93 +361,66 @@ const Par3ReservationPage = () => {
 					selectedDate={selectedDate}
 					changeSelectedDate={changeSelectedDate}
 				/>
-			</Stack>
-			{/* <Stack
-				sx={{
-					marginTop: "1rem",
-					padding: { md: "2rem 4rem 86.5px", xs: "2rem 2rem 86.5px" },
-				}}
-			>
-				{timeTable &&
-					Object.entries(timeTable)
-						.sort((a, b) => a[0] - b[0])
-						.map(([key, value]) => {
+
+				<Stack
+					flex
+					flexDirection="row"
+					sx={{
+						columnGap: { md: "1.5rem", xs: "1.25rem" },
+						overflowX: {
+							lg: "hidden",
+							md: "scroll",
+							xs: "scroll",
+						},
+					}}
+				>
+					{selectedDateIdx !== -1 &&
+						dateTable[selectedDateIdx].goods.map((item) => {
 							return (
 								<Stack
-									key={key}
-									flex
-									direction="row"
+									key={item.id}
 									sx={{
-										marginBottom: "2rem",
+										border: "1px solid",
+										borderColor:
+											item.id === goodsInfo.id
+												? "var(--primary-blue)"
+												: "#EAEFF9",
+										borderRadius: "8px",
 
-										overflowX: {
-											lg: "hidden",
-											md: "scroll",
-											xs: "scroll",
-										},
-										//width: "100vw",
+										minWidth: "150px",
+										textAlign: "center",
+										cursor: "pointer",
+									}}
+									onClick={() => {
+										getReservationTimeList(item);
 									}}
 								>
 									<Stack
 										sx={{
-											width: { md: "110px" },
+											padding: "1.5rem 0.5rem",
 											background: "var(--primary-blue)",
-											fontWeight: "600",
-											whiteSpace: "nowrap",
-											padding: "1rem 1.5rem",
-											textAlign: "center",
-											justifyContent: "center",
-											fontSize: {
-												xs: "0.875rem",
-											},
 											color: "white",
 											borderTopLeftRadius: "8px",
-											borderBottomLeftRadius: "8px",
+											borderTopRightRadius: "8px",
 										}}
 									>
-										{key}시
+										{item.name}
 									</Stack>
-									{value.map((item, idx) => (
-										<Stack
-											key={idx}
-											direction="column"
-											sx={{
-												width: {
-													md: "110px",
-													xs: "73px",
-												},
-												justifyContent: "center",
-												cursor: item.times.status
-													? "pointer"
-													: "not-allowed",
-												padding: "0.5rem 1rem",
-												textAlign: "center",
-												border: "1px solid var(--gray-3)",
-												background: !item.times.status
-													? "var(--gray-3)"
-													: item.times.time ===
-													  selectedTime
-													? "var(--primary-blue)"
-													: "white",
-												color: !item.times.status
-													? "var(--gray-5)"
-													: item.times.time ===
-													  selectedTime
-													? "white"
-													: "",
-											}}
-											onClick={() => {
-												if (!item.times.status) return;
-												setSelctedTime(item.times.time);
-											}}
-										>
-											<Stack>{item.times.time}</Stack>
-										</Stack>
-									))}
+									<Stack
+										sx={{
+											padding: "1rem 0.5rem",
+											background: "white",
+											borderBottomLeftRadius: "8px",
+											borderBottomRightRadius: "8px",
+										}}
+									>
+										{inputNumberWithComma(item.price)}
+									</Stack>
 								</Stack>
 							);
 						})}
-			</Stack> */}
+				</Stack>
+			</Stack>
 
 			<TimeTable
 				timeTable={timeTable}
@@ -493,7 +470,7 @@ const Par3ReservationPage = () => {
 				</GoodsReservationContainer>
 			</Stack>
 
-			<Dialog
+			<ApproachDialog
 				isOpen={isOpenModal}
 				setIsOpen={setIsOpenModal}
 				date={selectedDate}
@@ -507,4 +484,4 @@ const Par3ReservationPage = () => {
 	);
 };
 
-export default Par3ReservationPage;
+export default ApproachReservationPage;

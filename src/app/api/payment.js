@@ -11,6 +11,8 @@ export default async function apiPortOne(reqData, type) {
 	});
 	const json = await res.json();
 	if (json.success) {
+		sessionStorage.removeItem("impUid");
+		sessionStorage.removeItem("errorMsg");
 		toast.success("예약을 완료하였습니다.");
 
 		return true;

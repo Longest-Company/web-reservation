@@ -5,33 +5,27 @@ import {
 	Container,
 	Input,
 	InputLabel,
-	MenuItem,
 	Modal,
 	Paper,
-	Select,
 	Stack,
 	Typography,
 } from "@mui/material";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import closeIcon from "@/../../public/assets/close.svg";
+import enablePlusIcon from "@/../../public/assets/enablePlus.svg";
+import disablePlusIcon from "@/../../public/assets/disablePlus.svg";
+import enableMinusIcon from "@/../../public/assets/enableMinus.svg";
+import disableMinusIcon from "@/../../public/assets/disableMinus.svg";
+import Image from "next/image";
 
 import kakaoPay from "@/../../public/assets/kakaopay.svg";
 import naverPay from "@/../../public/assets/naverpay.svg";
 import creditCard from "@/../../public/assets/creditcard.svg";
 import { toast } from "sonner";
 import apiPortOne from "../api/payment";
+import inputNumberWithComma from "../utils/method";
 
-const inputNumberWithComma = (str) => {
-	return String(str).replace(/(\d)(?=(?:\d{3})+(?!\d))/g, "$1,");
-};
-
-const originFormData = {
-	name: "",
-	phoneNumber: "",
-	peopleCnt: "",
-};
-const Dialog = ({
+const ApproachDialog = ({
 	isOpen,
 	setIsOpen,
 	date,
@@ -43,11 +37,10 @@ const Dialog = ({
 }) => {
 	const dateSplit = date.split("-");
 	const formatDate = `${dateSplit[0]}년 ${dateSplit[1]}월 ${dateSplit[2]}일`;
-
-	const [formData, setFormData] = useState(originFormData);
-	const [isPossibleClick, setIsPossibleClick] = useState(false);
 	const [showChoosePayment, setShowChoosePayment] = useState(false);
-
+	const [phoneNumberArr, setPhoneNumberArr] = useState([""]);
+	const [reserveNumber, setReserveNumber] = useState(1);
+	const [isPossibleClick, setIsPossibleClick] = useState(false);
 	const [pg, setPg] = useState("");
 
 	let peopleSelect = [];
@@ -60,16 +53,23 @@ const Dialog = ({
 		});
 	}
 
+	useEffect(() => {
+		const filter = phoneNumberArr.filter(
+			(item) => item.length === 12 || item.length === 13
+		);
+		setIsPossibleClick(filter.length === reserveNumber);
+	}, [phoneNumberArr, reserveNumber]);
+
 	const closeInit = () => {
 		setIsOpen(false);
 		setShowChoosePayment(false);
-		setIsPossibleClick(false);
-		setFormData(originFormData);
+		setReserveNumber(1);
+		setPhoneNumberArr([""]);
 		setPg("");
 	};
 
 	const verifyPayment = async (data) => {
-		const isSuccess = await apiPortOne(data, "par3");
+		const isSuccess = await apiPortOne(data, "approach");
 		if (isSuccess) {
 			closeInit();
 			settingFinish();
@@ -94,18 +94,16 @@ const Dialog = ({
 
 			const redirectURL = process.env.NEXT_PUBLIC_REDIRECT
 				? process.env.NEXT_PUBLIC_REDIRECT
-				: "http://localhost:3000";
+				: "http://localhost:3001";
 
 			const data = {
 				pg: pg, // PG사
 				pay_method: payMethod, // 결제수단
 				setChoosePaymentmerchant_uid: `mid_${new Date().getTime()}`, // 주문번호
-				amount: formData.peopleCnt * goodsInfo.price, // 결제금액
-				name: `${formatDate} ${time} ${formData.peopleCnt}명`, // 주문명
-				buyer_name: formData.name, // 구매자 이름
-				buyer_tel: formData.phoneNumber, // 구매자 전화번호
+				amount: reserveNumber * goodsInfo.price, // 결제금액
+				name: `${formatDate} ${time} ${reserveNumber}명`, // 주문명
 				m_redirect_url:
-					redirectURL + `/par3/reservation?id=${companyInfo.id}`,
+					redirectURL + `/approach/reservation?id=${companyInfo.id}`,
 				notice_url: "",
 			};
 
@@ -116,9 +114,8 @@ const Dialog = ({
 				if (success) {
 					const data = {
 						portoneId: response.imp_uid,
-						name: formData.name,
-						phoneNumber: formData.phoneNumber,
-						reserveNumber: Number(formData.peopleCnt),
+						phoneNumber: phoneNumberArr,
+						reserveNumber: reserveNumber,
 						date: date,
 						time: time,
 						goodsId: goodsInfo.id,
@@ -132,19 +129,12 @@ const Dialog = ({
 		}
 	};
 
-	useEffect(() => {
-		setIsPossibleClick(
-			formData.name !== "" &&
-				formData.phoneNumber !== "" &&
-				(formData.phoneNumber.length === 12 ||
-					formData.phoneNumber.length === 13) &&
-				formData.peopleCnt !== ""
-		);
-	}, [formData]);
-
+	//모달 데이터 세팅
 	useEffect(() => {
 		if (modalData) {
-			setFormData(modalData);
+			const { phoneNumberArr, reserveNumber } = modalData;
+			setPhoneNumberArr(phoneNumberArr);
+			setReserveNumber(reserveNumber);
 		}
 	}, [modalData]);
 
@@ -167,7 +157,7 @@ const Dialog = ({
 						boxShadow: "2px 2px 12px 0px rgba(86, 117, 185, 0.25)",
 
 						padding: "1.5rem",
-						minHeight: "600px",
+						minHeight: "670px",
 					}}
 				>
 					<Stack flex>
@@ -214,144 +204,158 @@ const Dialog = ({
 
 						{!showChoosePayment ? (
 							<>
-								<InputLabel htmlFor="name">
-									예약자 이름{" "}
-									<span style={{ color: "red" }}>*</span>
-								</InputLabel>
-								<Input
-									id="name"
-									value={formData.name}
-									onChange={(event) => {
-										setFormData({
-											...formData,
-											name: event.target.value,
-										});
-									}}
-									fullWidth
-									sx={{
-										marginTop: "0.3rem",
-										"& .MuiInputBase-input": {
-											borderRadius: "8px",
-											border: "1px solid var(--gray-3)",
-											fontSize: 16,
-											padding: "10px 12px",
-											"&:focus": {
-												border: "2px solid var(--gray-3)",
-											},
-										},
-										"::after": {
-											border: "none",
-										},
-										"::before": {
-											border: "none",
-										},
-										"&:hover:not(.Mui-disabled, .Mui-error):before":
-											{
-												borderBottom: "none",
-											},
-										"input::placeholder": {
-											color: "var(--gray-4)",
-										},
-									}}
-									placeholder="예약자명"
-									required
-								/>
-
-								<InputLabel
-									htmlFor="phone"
-									sx={{ marginTop: "1rem" }}
-								>
-									연락처{" "}
-									<span style={{ color: "red" }}>*</span>
-								</InputLabel>
-								<Input
-									id="phone"
-									inputProps={{
-										maxLength: 13,
-										inputMode: "numeric",
-										pattern: "[0-9]*",
-									}}
-									value={formData.phoneNumber}
-									onChange={(event) => {
-										const newPhone = event.target.value
-											.replace(/[^0-9]/g, "")
-											.replace(
-												/^(\d{2,3})(\d{3,4})(\d{4})$/,
-												`$1-$2-$3`
-											);
-
-										setFormData({
-											...formData,
-											phoneNumber: newPhone,
-										});
-									}}
-									fullWidth
-									sx={{
-										marginTop: "0.3rem",
-										"& .MuiInputBase-input": {
-											borderRadius: "8px",
-											border: "1px solid var(--gray-3)",
-											fontSize: 16,
-											padding: "10px 12px",
-											"&:focus": {
-												border: "2px solid var(--gray-3)",
-											},
-										},
-										"::after": {
-											border: "none",
-										},
-										"::before": {
-											border: "none",
-										},
-										"&:hover:not(.Mui-disabled, .Mui-error):before":
-											{
-												borderBottom: "none",
-											},
-										"input::placeholder": {
-											color: "var(--gray-4)",
-										},
-									}}
-									placeholder="숫자만 입력"
-									required
-								/>
-
 								<InputLabel
 									htmlFor="peopleCnt"
 									sx={{ marginTop: "1rem" }}
 								>
 									입장 인원 수{" "}
+									<span style={{ fontSize: "0.875rem" }}>
+										(최대 3명까지 가능)
+									</span>
 									<span style={{ color: "red" }}>*</span>
 								</InputLabel>
-								<Select
-									id="peopleCnt"
-									value={formData.peopleCnt}
-									fullWidth
-									required
-									onChange={(event) => {
-										setFormData({
-											...formData,
-											peopleCnt: event.target.value,
-										});
-									}}
-									sx={{ height: "45px" }}
-								>
-									{peopleSelect.map((option) => (
-										<MenuItem
-											key={option.key}
-											value={option.key}
-										>
-											{option.label}
-										</MenuItem>
-									))}
-								</Select>
-								<Typography
+
+								<Stack
+									spacing={2}
+									direction="row"
 									sx={{
-										fontSize: "0.8rem",
-										color: "var(--gray-5)",
+										marginTop: "1rem",
+										alignItems: "center",
 									}}
 								>
-									{companyInfo.maxUser}명까지 가능
-								</Typography>
+									<Image
+										src={
+											phoneNumberArr.length === 1
+												? disableMinusIcon
+												: enableMinusIcon
+										}
+										width={20}
+										alt="minusPeople"
+										onClick={() => {
+											if (phoneNumberArr.length !== 1) {
+												setReserveNumber(
+													(prev) => prev - 1
+												);
+												const tmpPhoneNumberArr =
+													phoneNumberArr;
+												tmpPhoneNumberArr.pop();
+												setPhoneNumberArr(
+													tmpPhoneNumberArr
+												);
+											}
+										}}
+										style={{
+											cursor:
+												phoneNumberArr.length === 1
+													? "not-allowed"
+													: "pointer",
+										}}
+									/>
+									<Typography>{reserveNumber}</Typography>
+									<Image
+										src={
+											phoneNumberArr.length === 3
+												? disablePlusIcon
+												: enablePlusIcon
+										}
+										width={20}
+										alt="plusPeople"
+										onClick={() => {
+											if (phoneNumberArr.length !== 3) {
+												setReserveNumber(
+													(prev) => prev + 1
+												);
+												const tmpPhoneNumberArr =
+													phoneNumberArr;
+												tmpPhoneNumberArr.push("");
+												setPhoneNumberArr(
+													tmpPhoneNumberArr
+												);
+											}
+										}}
+										style={{
+											cursor:
+												phoneNumberArr.length === 3
+													? "not-allowed"
+													: "pointer",
+										}}
+									/>
+								</Stack>
+
+								{phoneNumberArr.map((item, idx) => {
+									return (
+										<Stack key={idx}>
+											<InputLabel
+												htmlFor={`phone-${idx}`}
+												sx={{ marginTop: "1rem" }}
+											>
+												연락처 {idx + 1}{" "}
+												<span style={{ color: "red" }}>
+													*
+												</span>
+											</InputLabel>
+											<Input
+												id={`phone-${idx}`}
+												inputProps={{
+													maxLength: 13,
+													inputMode: "numeric",
+													pattern: "[0-9]*",
+												}}
+												value={item}
+												onChange={(event) => {
+													const newPhone =
+														event.target.value
+															.replace(
+																/[^0-9]/g,
+																""
+															)
+															.replace(
+																/^(\d{2,3})(\d{3,4})(\d{4})$/,
+																`$1-$2-$3`
+															);
+
+													const tmpPhoneArr = [
+														...phoneNumberArr,
+													];
+
+													tmpPhoneArr[idx] = newPhone;
+													setPhoneNumberArr(
+														tmpPhoneArr
+													);
+												}}
+												fullWidth
+												sx={{
+													marginTop: "0.3rem",
+													"& .MuiInputBase-input": {
+														borderRadius: "8px",
+														border: "1px solid var(--gray-3)",
+														fontSize: 16,
+														padding: "10px 12px",
+														"&:focus": {
+															border: "2px solid var(--gray-3)",
+														},
+													},
+													"::after": {
+														border: "none",
+													},
+													"::before": {
+														border: "none",
+													},
+													"&:hover:not(.Mui-disabled, .Mui-error):before":
+														{
+															borderBottom:
+																"none",
+														},
+													"input::placeholder": {
+														color: "var(--gray-4)",
+													},
+												}}
+												placeholder="숫자만 입력"
+												required
+											/>
+										</Stack>
+									);
+								})}
 							</>
 						) : (
 							<Stack
@@ -444,22 +448,22 @@ const Dialog = ({
 							columnGap={1}
 							sx={{
 								marginTop: "2.5rem",
+								position: "absolute",
+								bottom: "20px",
+								width: {
+									md: "calc(420px - 3rem)",
+									xs: "calc(100% - 3rem)",
+								},
 							}}
 						>
 							<Stack
 								sx={{
 									padding: "1rem",
 									border: "1px solid",
-									borderColor:
-										formData.peopleCnt !== ""
-											? "var(--primary-blue)"
-											: "var(--gray-5)",
+									borderColor: "var(--primary-blue)",
 									borderRadius: "8px",
 									marginBottom: "1rem",
-									color:
-										formData.peopleCnt !== ""
-											? "var(--primary-blue)"
-											: "var(--gray-5)",
+									color: "var(--primary-blue)",
 								}}
 							>
 								<Stack flex direction="row">
@@ -478,19 +482,12 @@ const Dialog = ({
 								>
 									<Typography>
 										{inputNumberWithComma(goodsInfo.price)}
-										원 x
-										{formData.peopleCnt !== ""
-											? formData.peopleCnt
-											: "0"}
-										인
+										원 x{reserveNumber}인
 									</Typography>
 									<Typography sx={{ fontWeight: "700" }}>
-										{formData.peopleCnt !== ""
-											? inputNumberWithComma(
-													formData.peopleCnt *
-														goodsInfo.price
-											  )
-											: "0"}
+										{inputNumberWithComma(
+											reserveNumber * goodsInfo.price
+										)}
 										원
 									</Typography>
 								</Stack>
@@ -533,7 +530,10 @@ const Dialog = ({
 										} else {
 											sessionStorage.setItem(
 												"reservationData",
-												JSON.stringify(formData)
+												JSON.stringify({
+													phoneNumberArr,
+													reserveNumber,
+												})
 											);
 											sessionStorage.setItem(
 												"reservationTime",
@@ -543,26 +543,27 @@ const Dialog = ({
 												"reservationGoodsInfo",
 												JSON.stringify(goodsInfo)
 											);
-
 											setShowChoosePayment(true);
+											setIsPossibleClick(false);
 										}
 									}}
 									disabled={
-										showChoosePayment && pg === ""
-											? true
-											: !isPossibleClick
+										!(
+											isPossibleClick ||
+											(pg !== "" && showChoosePayment)
+										)
 									}
 									sx={{
-										background: isPossibleClick
-											? "#283081"
-											: "var(--gray-3)",
-										color: isPossibleClick
-											? "white"
-											: "var(--gray-5)",
+										background: "#283081",
+										color: "white",
 										boxShadow: "none",
 										"&:hover": {
 											background: "#283081",
 											color: "white",
+										},
+										"&.Mui-disabled": {
+											background: "var(--gray-3)",
+											color: "var(--gray-4)",
 										},
 										padding: "0.5rem 1.25rem",
 									}}
@@ -578,4 +579,4 @@ const Dialog = ({
 	);
 };
 
-export default Dialog;
+export default ApproachDialog;
