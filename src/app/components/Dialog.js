@@ -69,7 +69,7 @@ const Dialog = ({
 	};
 
 	const verifyPayment = async (data) => {
-		const isSuccess = await apiPortOne(data);
+		const isSuccess = await apiPortOne(data, "par3");
 		if (isSuccess) {
 			closeInit();
 			settingFinish();
@@ -418,7 +418,7 @@ const Dialog = ({
 										justifyContent: "flex-start",
 										border: "1px solid",
 										borderColor:
-											pg === "kcp.IP25K"
+											pg === "kcp.IP25L"
 												? "#283081"
 												: "#d2d2d2",
 										borderRadius: "10px",
